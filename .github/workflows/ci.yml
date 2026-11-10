@@ -1,0 +1,47 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27.x"
+          cache: true
+
+      - name: gofmt
+        shell: bash
+        run: |
+          files="$(gofmt -l .)"
+          if [ -n "$files" ]; then
+            echo "gofmt required:"
+            echo "$files"
+            exit 1
+          fi
+
+      - name: vet
+        run: go vet ./...
+
+      - name: test with race detector
+        run: go test -race ./...
+
+      - name: build
+        run: go build ./...
+
+      - name: validate example configs
+        run: |
+          go run ./cmd/fakeagents validate -c configs/fakeagents.json
+          go run ./cmd/fakeagents validate -c configs/fakeagents.yaml

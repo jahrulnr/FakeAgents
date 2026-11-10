@@ -1,0 +1,132 @@
+{
+  "$schema": "../docs/config.schema.json",
+  "server": {
+    "host": "0.0.0.0",
+    "port": 11110
+  },
+  "logging": {
+    "level": "info",
+    "format": "text",
+    "access_log": true
+  },
+  "auth": {
+    "mode": "off"
+  },
+  "required_headers": [
+    {
+      "name": "x-opencode-session",
+      "endpoints": [
+        "chat.completions"
+      ],
+      "status": 400,
+      "type": "invalid_request_error",
+      "code": "missing_required_header",
+      "message": "Missing required header: x-opencode-session (OpenCode session id)."
+    }
+  ],
+  "defaults": {
+    "strict_models": false,
+    "latency": {
+      "enabled": false
+    }
+  },
+  "debug": {
+    "enabled": true,
+    "record_tools": true
+  },
+  "scenarios": [
+    {
+      "name": "harness-exec-codex",
+      "description": "Real Codex exec_command pwd execution.",
+      "priority": 200,
+      "match": {
+        "providers": [
+          "openai"
+        ],
+        "endpoints": [
+          "responses"
+        ],
+        "user_regex": "(?i)run pwd"
+      },
+      "respond": {
+        "steps": [
+          {
+            "tool_calls": [
+              {
+                "name": "exec_command",
+                "arguments": {
+                  "cmd": "pwd"
+                }
+              }
+            ]
+          },
+          {
+            "text": "HARNESS_EXEC_OK: {{ .LastToolResult }}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "harness-exec-claude",
+      "description": "Real Claude Code Bash pwd execution.",
+      "priority": 200,
+      "match": {
+        "providers": [
+          "anthropic"
+        ],
+        "endpoints": [
+          "messages"
+        ],
+        "user_regex": "(?i)run pwd"
+      },
+      "respond": {
+        "steps": [
+          {
+            "tool_calls": [
+              {
+                "name": "Bash",
+                "arguments": {
+                  "command": "pwd"
+                }
+              }
+            ]
+          },
+          {
+            "text": "HARNESS_EXEC_OK: {{ .LastToolResult }}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "harness-exec-opencode",
+      "description": "Real OpenCode bash pwd execution.",
+      "priority": 200,
+      "match": {
+        "providers": [
+          "openai"
+        ],
+        "endpoints": [
+          "chat.completions"
+        ],
+        "user_regex": "(?i)run pwd"
+      },
+      "respond": {
+        "steps": [
+          {
+            "tool_calls": [
+              {
+                "name": "bash",
+                "arguments": {
+                  "command": "pwd"
+                }
+              }
+            ]
+          },
+          {
+            "text": "HARNESS_EXEC_OK: {{ .LastToolResult }}"
+          }
+        ]
+      }
+    }
+  ]
+}

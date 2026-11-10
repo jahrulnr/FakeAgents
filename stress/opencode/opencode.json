@@ -1,0 +1,24 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "fakeagents/fake-gpt-4o",
+  "autoupdate": false,
+  "share": "disabled",
+  "provider": {
+    "fakeagents": {
+      "name": "FakeAgents",
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "http://fakeagents:11110/v1",
+        "apiKey": "sk-fakeagents",
+        "headers": {
+          "x-opencode-session": "stress-opencode-session"
+        }
+      },
+      "models": {
+        "fake-gpt-4o": {
+          "name": "Fake GPT-4o"
+        }
+      }
+    }
+  }
+}

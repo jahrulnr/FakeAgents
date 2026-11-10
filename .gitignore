@@ -1,0 +1,9 @@
+bin/
+coverage.out
+/fakeagents
+/fakeagents.json
+*.log
+.DS_Store
+.idea/
+.vscode/
+stress/.env

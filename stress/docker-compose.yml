@@ -1,0 +1,31 @@
+name: fakeagents-stress
+
+services:
+  fakeagents:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: fakeagents:stress
+    command: ["serve", "-c", "/etc/fakeagents/config.json"]
+    volumes:
+      - ./fakeagents.json:/etc/fakeagents/config.json:ro
+    ports:
+      - "${FAKEAGENTS_PORT:-18080}:11110"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:11110/healthz"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+      start_period: 2s
+
+  clis:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: fakeagents-clis:stress
+    depends_on:
+      fakeagents:
+        condition: service_healthy
+    environment:
+      FAKEAGENTS_URL: http://fakeagents:11110
+    restart: "no"

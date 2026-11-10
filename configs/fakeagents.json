@@ -1,0 +1,584 @@
+{
+  "$schema": "../docs/config.schema.json",
+  "server": {
+    "host": "127.0.0.1",
+    "port": 11110,
+    "tls": {},
+    "read_header_timeout": "10s",
+    "idle_timeout": "2m0s",
+    "shutdown_timeout": "15s",
+    "max_body_bytes": 33554432,
+    "cors": {
+      "enabled": true,
+      "allowed_origins": [
+        "*"
+      ],
+      "allowed_methods": [
+        "GET",
+        "POST",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "allowed_headers": [
+        "*"
+      ],
+      "exposed_headers": [
+        "*"
+      ],
+      "max_age": "10m0s"
+    }
+  },
+  "logging": {
+    "level": "info",
+    "format": "text",
+    "access_log": true
+  },
+  "auth": {
+    "mode": "off",
+    "exempt_paths": [
+      "/healthz",
+      "/_fakeagents/*"
+    ]
+  },
+  "defaults": {
+    "provider": "openai",
+    "model": "fake-gpt-4o",
+    "max_output_tokens": 1024,
+    "respect_max_tokens": true,
+    "session_headers": [
+      "x-fakeagents-session",
+      "x-opencode-session",
+      "x-session-id",
+      "x-conversation-id"
+    ],
+    "thinking": {
+      "mode": "mirror",
+      "template": "reasoning"
+    },
+    "tooling": {
+      "mode": "smart",
+      "argument_strategy": "schema",
+      "max_tool_calls": 8,
+      "final_template": "final",
+      "unknown_tool": "allow"
+    },
+    "usage": {
+      "mode": "computed",
+      "multiplier": 1,
+      "simulate_cache": true,
+      "cache_tokens": 1024
+    },
+    "stream": {
+      "chunk_size": 24,
+      "chunk_unit": "runes",
+      "chunk_delay": "0s"
+    },
+    "latency": {
+      "enabled": true,
+      "time_to_first_token": {
+        "min": "20ms",
+        "max": "60ms"
+      },
+      "tokens_per_second": {
+        "min": 150,
+        "max": 400
+      },
+      "per_chunk": "0s"
+    },
+    "structured_output": {
+      "mode": "auto"
+    }
+  },
+  "models": [
+    {
+      "id": "fake-gpt-4o",
+      "provider": "openai",
+      "display_name": "Fake GPT-4o",
+      "owned_by": "fakeagents",
+      "created": 1700000000,
+      "context_window": 128000,
+      "max_output_tokens": 16384,
+      "capabilities": [
+        "chat",
+        "tools",
+        "vision",
+        "structured_output"
+      ]
+    },
+    {
+      "id": "fake-gpt-5",
+      "provider": "openai",
+      "display_name": "Fake GPT-5",
+      "owned_by": "fakeagents",
+      "created": 1700000000,
+      "context_window": 400000,
+      "max_output_tokens": 128000,
+      "capabilities": [
+        "chat",
+        "tools",
+        "vision",
+        "reasoning",
+        "structured_output"
+      ],
+      "reasoning": true
+    },
+    {
+      "id": "fake-o4-mini",
+      "provider": "openai",
+      "display_name": "Fake o4-mini",
+      "owned_by": "fakeagents",
+      "created": 1700000000,
+      "context_window": 200000,
+      "max_output_tokens": 100000,
+      "capabilities": [
+        "chat",
+        "tools",
+        "reasoning"
+      ],
+      "reasoning": true
+    },
+    {
+      "id": "fake-claude-sonnet",
+      "provider": "anthropic",
+      "display_name": "Fake Claude Sonnet",
+      "owned_by": "fakeagents",
+      "created": 1700000000,
+      "context_window": 200000,
+      "max_output_tokens": 64000,
+      "capabilities": [
+        "chat",
+        "tools",
+        "vision",
+        "reasoning",
+        "structured_output",
+        "prompt_caching"
+      ],
+      "reasoning": true
+    },
+    {
+      "id": "fake-claude-opus",
+      "provider": "anthropic",
+      "display_name": "Fake Claude Opus",
+      "owned_by": "fakeagents",
+      "created": 1700000000,
+      "context_window": 200000,
+      "max_output_tokens": 32000,
+      "capabilities": [
+        "chat",
+        "tools",
+        "vision",
+        "reasoning",
+        "prompt_caching"
+      ],
+      "reasoning": true
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "thinking",
+      "description": "Force a reasoning/thinking block before the answer.",
+      "match": {
+        "triggers": [
+          "reasoning",
+          "thinking"
+        ]
+      },
+      "respond": {
+        "type": "text",
+        "reasoning_template": "reasoning",
+        "thinking": true
+      }
+    },
+    {
+      "name": "tool-call",
+      "description": "Emit a schema-generated tool call for the first declared tool, then a final answer after the tool result.",
+      "match": {
+        "triggers": [
+          "tool",
+          "tools",
+          "tool-call"
+        ]
+      },
+      "respond": {
+        "type": "tool_call",
+        "thinking": true
+      }
+    },
+    {
+      "name": "billing",
+      "description": "Billing quota exhausted (OpenAI 429 insufficient_quota, Anthropic 402 billing_error).",
+      "match": {
+        "triggers": [
+          "billing",
+          "quota",
+          "insufficient_quota"
+        ]
+      },
+      "respond": {
+        "type": "error",
+        "error": {
+          "preset": "billing"
+        }
+      }
+    },
+    {
+      "name": "rate-limit",
+      "description": "Rate limit response with Retry-After.",
+      "match": {
+        "triggers": [
+          "rate-limit",
+          "ratelimit",
+          "429"
+        ]
+      },
+      "respond": {
+        "type": "error",
+        "error": {
+          "preset": "rate_limit",
+          "retry_after": "2s"
+        }
+      }
+    },
+    {
+      "name": "overloaded",
+      "description": "Provider overload (Anthropic 529 overloaded_error, OpenAI 503).",
+      "match": {
+        "triggers": [
+          "overloaded",
+          "529"
+        ]
+      },
+      "respond": {
+        "type": "error",
+        "error": {
+          "preset": "overloaded"
+        }
+      }
+    },
+    {
+      "name": "server-error",
+      "description": "Internal server error.",
+      "match": {
+        "triggers": [
+          "server-error",
+          "500"
+        ]
+      },
+      "respond": {
+        "type": "error",
+        "error": {
+          "preset": "server_error"
+        }
+      }
+    },
+    {
+      "name": "auth-error",
+      "description": "Invalid API key.",
+      "match": {
+        "triggers": [
+          "auth-error",
+          "401"
+        ]
+      },
+      "respond": {
+        "type": "error",
+        "error": {
+          "preset": "authentication"
+        }
+      }
+    },
+    {
+      "name": "context-length",
+      "description": "Context window exceeded.",
+      "match": {
+        "triggers": [
+          "context-length",
+          "context"
+        ]
+      },
+      "respond": {
+        "type": "error",
+        "error": {
+          "preset": "context_length"
+        }
+      }
+    },
+    {
+      "name": "slow",
+      "description": "Very low throughput (2 tokens/sec, 2s time to first token).",
+      "match": {
+        "triggers": [
+          "slow",
+          "low-tps"
+        ]
+      },
+      "respond": {
+        "type": "text",
+        "latency": {
+          "time_to_first_token": "2s",
+          "tokens_per_second": 2
+        }
+      }
+    },
+    {
+      "name": "fast",
+      "description": "Maximum throughput with no perceptible delay.",
+      "match": {
+        "triggers": [
+          "fast",
+          "high-tps"
+        ]
+      },
+      "respond": {
+        "type": "text",
+        "latency": {
+          "time_to_first_token": "0s",
+          "tokens_per_second": 10000
+        }
+      }
+    },
+    {
+      "name": "empty",
+      "description": "Empty assistant content with a normal stop reason.",
+      "match": {
+        "triggers": [
+          "empty"
+        ]
+      },
+      "respond": {
+        "type": "empty"
+      }
+    },
+    {
+      "name": "truncated",
+      "description": "Output truncated by max tokens.",
+      "match": {
+        "triggers": [
+          "truncated",
+          "length"
+        ]
+      },
+      "respond": {
+        "type": "text",
+        "finish": "length"
+      }
+    },
+    {
+      "name": "refusal",
+      "description": "Safety refusal.",
+      "match": {
+        "triggers": [
+          "refusal",
+          "content-filter"
+        ]
+      },
+      "respond": {
+        "type": "refusal"
+      }
+    },
+    {
+      "name": "mid-stream-error",
+      "description": "SSE stream fails after three frames (HTTP 200 already sent).",
+      "match": {
+        "triggers": [
+          "mid-stream-error",
+          "stream-error"
+        ]
+      },
+      "respond": {
+        "type": "text",
+        "stream": {
+          "error": {
+            "preset": "overloaded"
+          },
+          "fail_after_chunks": 3
+        }
+      }
+    },
+    {
+      "name": "mid-stream-abort",
+      "description": "SSE stream closes abruptly after two frames without a terminal event.",
+      "match": {
+        "triggers": [
+          "mid-stream-abort",
+          "stream-abort"
+        ]
+      },
+      "respond": {
+        "type": "text",
+        "stream": {
+          "abort_after_chunks": 2
+        }
+      }
+    },
+    {
+      "name": "unicode",
+      "description": "Multilingual and emoji content for chunk-boundary tests.",
+      "match": {
+        "triggers": [
+          "unicode",
+          "emoji"
+        ]
+      },
+      "respond": {
+        "type": "text",
+        "text_template": "unicode"
+      }
+    },
+    {
+      "name": "json",
+      "description": "Valid JSON object output.",
+      "match": {
+        "triggers": [
+          "json"
+        ]
+      },
+      "respond": {
+        "type": "text",
+        "text_template": "json"
+      }
+    },
+    {
+      "name": "long",
+      "description": "Long multi-paragraph output.",
+      "match": {
+        "triggers": [
+          "long"
+        ]
+      },
+      "respond": {
+        "type": "text",
+        "text_template": "long"
+      }
+    },
+    {
+      "name": "agentic",
+      "description": "Multi-turn tool loop driven by the harness tools[] array; final answer after the plan is exhausted.",
+      "match": {
+        "triggers": [
+          "agent",
+          "agentic"
+        ]
+      },
+      "respond": {
+        "agentic": true,
+        "thinking": true
+      }
+    },
+    {
+      "name": "tool-error",
+      "description": "Three-turn script: declared tool -> undeclared tool with malformed arguments -> final answer. Triggers on the phrase test tool error.",
+      "match": {
+        "triggers": [
+          "tool-error",
+          "tool-error-loop"
+        ],
+        "user_regex": "(?i)test tool error"
+      },
+      "respond": {
+        "thinking": true,
+        "steps": [
+          {
+            "tool_calls": [
+              {
+                "tool_index": 0
+              }
+            ]
+          },
+          {
+            "tool_calls": [
+              {
+                "name": "fakeagents_missing_tool",
+                "arguments": {},
+                "arguments_json": "{\"broken\": "
+              }
+            ]
+          },
+          {
+            "text": "Tool result: {{ .LastToolResult }}\n\nFinal answer after the scripted tool error."
+          }
+        ]
+      }
+    },
+    {
+      "name": "steering",
+      "description": "Slow first turn, then acknowledges queued/steering messages. Uses a stateful sequence keyed by session.",
+      "match": {
+        "triggers": [
+          "steering",
+          "queue"
+        ]
+      },
+      "respond": {
+        "steps_mode": "sequence",
+        "latency": {
+          "time_to_first_token": {
+            "min": "500ms",
+            "max": "800ms"
+          },
+          "tokens_per_second": {
+            "min": 30,
+            "max": 30
+          }
+        },
+        "steps": [
+          {
+            "text": "Working on the first turn. This response is intentionally slow so another message can arrive while it streams.\n\n{{ lorem 150 }}"
+          },
+          {
+            "text": "Steering message received: {{ .UserMessage }}\n\nI adjusted the plan.",
+            "latency": {
+              "time_to_first_token": "0ms",
+              "tokens_per_second": 10000
+            }
+          },
+          {
+            "text": "Queue drained. Final turn.",
+            "latency": {
+              "time_to_first_token": "0ms",
+              "tokens_per_second": 10000
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "rate_limit": {
+    "scope": "session",
+    "requests_per_minute": 60,
+    "tokens_per_minute": 20000,
+    "retry_after": "1s",
+    "include_headers": true,
+    "exempt_paths": [
+      "/healthz",
+      "/_fakeagents/*"
+    ]
+  },
+  "debug": {
+    "enabled": true,
+    "headers": true,
+    "max_recorded_requests": 200,
+    "record_tools": false
+  },
+  "encryption": {
+    "validate_replay": true
+  },
+  "responses": {
+    "store": true,
+    "ttl": "1h0m0s",
+    "max_entries": 1000
+  },
+  "providers": {
+    "openai": {
+      "chat_reasoning_field": "reasoning_content",
+      "system_fingerprint": "fp_fakeagents",
+      "validate_encrypted_content": true
+    },
+    "anthropic": {
+      "require_version": true,
+      "api_version": "2023-06-01",
+      "stream_ping": true,
+      "validate_signatures": true
+    }
+  }
+}

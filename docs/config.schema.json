@@ -1,0 +1,1298 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jahrulnr/fakeagents/docs/config.schema.json",
+  "title": "FakeAgents configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "server": {
+      "$ref": "#/$defs/server"
+    },
+    "logging": {
+      "$ref": "#/$defs/logging"
+    },
+    "auth": {
+      "$ref": "#/$defs/auth"
+    },
+    "required_headers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/headerRule"
+      }
+    },
+    "defaults": {
+      "$ref": "#/$defs/defaults"
+    },
+    "models": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/model"
+      }
+    },
+    "templates": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "scenarios": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/scenario"
+      }
+    },
+    "scenario_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "replace_builtin_scenarios": {
+      "type": "boolean",
+      "default": false
+    },
+    "rate_limit": {
+      "$ref": "#/$defs/rateLimit"
+    },
+    "debug": {
+      "$ref": "#/$defs/debug"
+    },
+    "encryption": {
+      "$ref": "#/$defs/encryption"
+    },
+    "responses": {
+      "$ref": "#/$defs/responses"
+    },
+    "providers": {
+      "$ref": "#/$defs/providers"
+    },
+    "media": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "transcription": {
+          "type": "string"
+        },
+        "speech_files": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "image_file": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "duration": {
+      "oneOf": [
+        {
+          "type": "string",
+          "examples": [
+            "250ms",
+            "2s",
+            "1m"
+          ]
+        },
+        {
+          "type": "number",
+          "description": "Milliseconds"
+        }
+      ]
+    },
+    "durationRange": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/duration"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "min": {
+              "$ref": "#/$defs/duration"
+            },
+            "max": {
+              "$ref": "#/$defs/duration"
+            }
+          }
+        }
+      ]
+    },
+    "numberRange": {
+      "oneOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "min": {
+              "type": "number"
+            },
+            "max": {
+              "type": "number"
+            }
+          }
+        }
+      ]
+    },
+    "server": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "host": {
+          "type": "string",
+          "default": "127.0.0.1"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535,
+          "default": 11110
+        },
+        "base_path": {
+          "type": "string"
+        },
+        "tls": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "cert_file": {
+              "type": "string"
+            },
+            "key_file": {
+              "type": "string"
+            }
+          }
+        },
+        "read_header_timeout": {
+          "$ref": "#/$defs/duration"
+        },
+        "read_timeout": {
+          "$ref": "#/$defs/duration"
+        },
+        "write_timeout": {
+          "$ref": "#/$defs/duration"
+        },
+        "idle_timeout": {
+          "$ref": "#/$defs/duration"
+        },
+        "shutdown_timeout": {
+          "$ref": "#/$defs/duration"
+        },
+        "max_body_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cors": {
+          "$ref": "#/$defs/cors"
+        }
+      }
+    },
+    "cors": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "allowed_origins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowed_methods": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowed_headers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "exposed_headers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allow_credentials": {
+          "type": "boolean"
+        },
+        "max_age": {
+          "$ref": "#/$defs/duration"
+        }
+      }
+    },
+    "logging": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": [
+            "debug",
+            "info",
+            "warn",
+            "warning",
+            "error"
+          ]
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "text",
+            "json",
+            "logfmt"
+          ]
+        },
+        "access_log": {
+          "type": "boolean"
+        },
+        "output": {
+          "type": "string"
+        }
+      }
+    },
+    "auth": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "off",
+            "optional",
+            "required"
+          ]
+        },
+        "accept_any": {
+          "type": "boolean"
+        },
+        "keys": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/apiKey"
+          }
+        },
+        "exempt_paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "apiKey": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "providers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "openai",
+              "anthropic"
+            ]
+          }
+        }
+      }
+    },
+    "headerRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "providers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "openai",
+              "anthropic"
+            ]
+          }
+        },
+        "endpoints": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "images.generations",
+              "images.edits",
+              "audio.speech",
+              "audio.transcriptions",
+              "chat.completions",
+              "responses",
+              "messages",
+              "count_tokens",
+              "models"
+            ]
+          }
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "methods": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 599
+        },
+        "type": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "allow_empty": {
+          "type": "boolean"
+        },
+        "exempt_paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "type": "string",
+          "enum": [
+            "openai",
+            "anthropic"
+          ]
+        },
+        "model": {
+          "type": "string"
+        },
+        "max_output_tokens": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "strict_models": {
+          "type": "boolean"
+        },
+        "respect_max_tokens": {
+          "type": "boolean"
+        },
+        "session_headers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "scenario": {
+          "type": "string"
+        },
+        "thinking": {
+          "$ref": "#/$defs/thinking"
+        },
+        "tooling": {
+          "$ref": "#/$defs/tooling"
+        },
+        "usage": {
+          "$ref": "#/$defs/usage"
+        },
+        "stream": {
+          "$ref": "#/$defs/stream"
+        },
+        "latency": {
+          "$ref": "#/$defs/latency"
+        },
+        "structured_output": {
+          "$ref": "#/$defs/structuredOutput"
+        }
+      }
+    },
+    "thinking": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "mirror",
+            "always",
+            "never"
+          ]
+        },
+        "template": {
+          "type": "string"
+        },
+        "redacted": {
+          "type": "boolean"
+        }
+      }
+    },
+    "tooling": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "smart",
+            "always",
+            "never",
+            "agent"
+          ]
+        },
+        "argument_strategy": {
+          "type": "string",
+          "enum": [
+            "schema",
+            "static",
+            "template"
+          ]
+        },
+        "arguments": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          }
+        },
+        "argument_template": {
+          "type": "string"
+        },
+        "max_tool_calls": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "include_reasoning": {
+          "type": "boolean"
+        },
+        "final_after_tool_results": {
+          "type": "boolean"
+        },
+        "final_template": {
+          "type": "string"
+        },
+        "plan": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "unknown_tool": {
+          "type": "string",
+          "enum": [
+            "allow",
+            "skip",
+            "error"
+          ]
+        }
+      }
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "computed",
+            "zero",
+            "fixed"
+          ]
+        },
+        "input_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "output_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reasoning_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cached_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cache_write_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "multiplier": {
+          "type": "number",
+          "minimum": 0
+        },
+        "simulate_cache": {
+          "type": "boolean"
+        },
+        "cache_tokens": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "stream": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "chunk_size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "chunk_unit": {
+          "type": "string",
+          "enum": [
+            "runes",
+            "words"
+          ]
+        },
+        "chunk_delay": {
+          "$ref": "#/$defs/durationRange"
+        },
+        "include_usage": {
+          "type": "boolean"
+        },
+        "send_done": {
+          "type": "boolean"
+        }
+      }
+    },
+    "latency": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "time_to_first_token": {
+          "$ref": "#/$defs/durationRange"
+        },
+        "tokens_per_second": {
+          "$ref": "#/$defs/numberRange"
+        },
+        "per_chunk": {
+          "$ref": "#/$defs/durationRange"
+        }
+      }
+    },
+    "structuredOutput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "text"
+          ]
+        }
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "openai",
+            "anthropic",
+            "both",
+            "all"
+          ]
+        },
+        "display_name": {
+          "type": "string"
+        },
+        "owned_by": {
+          "type": "string"
+        },
+        "pricing": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "created": {
+          "type": "integer"
+        },
+        "context_window": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max_output_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "reasoning": {
+          "type": "boolean"
+        }
+      }
+    },
+    "scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "priority": {
+          "type": "integer"
+        },
+        "match": {
+          "$ref": "#/$defs/match"
+        },
+        "respond": {
+          "$ref": "#/$defs/respond"
+        }
+      }
+    },
+    "match": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "providers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "openai",
+              "anthropic"
+            ]
+          }
+        },
+        "endpoints": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "images.generations",
+              "images.edits",
+              "audio.speech",
+              "audio.transcriptions",
+              "chat.completions",
+              "responses",
+              "messages",
+              "count_tokens",
+              "models"
+            ]
+          }
+        },
+        "models": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "system",
+              "developer",
+              "user",
+              "assistant",
+              "tool"
+            ]
+          }
+        },
+        "stream": {
+          "type": "boolean"
+        },
+        "thinking": {
+          "type": "boolean"
+        },
+        "has_tools": {
+          "type": "boolean"
+        },
+        "has_tool_results": {
+          "type": "boolean"
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "header_regex": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "header_present": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "json_equals": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "json_regex": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "json_exists": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "user_regex": {
+          "type": "string"
+        },
+        "system_regex": {
+          "type": "string"
+        },
+        "turn": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "probability": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "triggers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "json_count": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path"
+            ],
+            "anyOf": [
+              {
+                "required": [
+                  "min"
+                ]
+              },
+              {
+                "required": [
+                  "max"
+                ]
+              }
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "where": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "exists": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "empty": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "min": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "max": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    "respond": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "text",
+            "reasoning",
+            "tool_call",
+            "refusal",
+            "empty",
+            "error",
+            "raw"
+          ]
+        },
+        "text": {
+          "type": "string"
+        },
+        "text_template": {
+          "type": "string"
+        },
+        "variants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "reasoning": {
+          "type": "string"
+        },
+        "reasoning_template": {
+          "type": "string"
+        },
+        "redacted_reasoning": {
+          "type": "boolean"
+        },
+        "thinking": {
+          "type": "boolean"
+        },
+        "tool_calls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/toolCallSpec"
+          }
+        },
+        "finish": {
+          "type": "string",
+          "enum": [
+            "stop",
+            "length",
+            "tool_calls",
+            "content_filter",
+            "refusal",
+            "end_turn",
+            "max_tokens",
+            "tool_use"
+          ]
+        },
+        "stop_sequence": {
+          "type": "string"
+        },
+        "usage": {
+          "$ref": "#/$defs/usageOverride"
+        },
+        "latency": {
+          "$ref": "#/$defs/latencyOverride"
+        },
+        "stream": {
+          "$ref": "#/$defs/streamOverride"
+        },
+        "error": {
+          "$ref": "#/$defs/errorSpec"
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "raw_json": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 599
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/respond"
+          }
+        },
+        "agentic": {
+          "type": "boolean"
+        },
+        "tool_plan": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "unknown_tool": {
+          "type": "string",
+          "enum": [
+            "allow",
+            "skip",
+            "error"
+          ]
+        },
+        "steps_mode": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "request",
+            "sequence"
+          ]
+        }
+      }
+    },
+    "toolCallSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "tool_index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "arguments": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "arguments_json": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "usageOverride": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "computed",
+            "fixed"
+          ]
+        },
+        "input_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "output_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reasoning_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cached_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cache_write_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "multiplier": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "latencyOverride": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "time_to_first_token": {
+          "$ref": "#/$defs/durationRange"
+        },
+        "tokens_per_second": {
+          "$ref": "#/$defs/numberRange"
+        },
+        "chunk_delay": {
+          "$ref": "#/$defs/durationRange"
+        }
+      }
+    },
+    "streamOverride": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "chunk_size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "chunk_unit": {
+          "type": "string",
+          "enum": [
+            "runes",
+            "words"
+          ]
+        },
+        "chunk_delay": {
+          "$ref": "#/$defs/durationRange"
+        },
+        "error": {
+          "$ref": "#/$defs/errorSpec"
+        },
+        "fail_after_chunks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "abort_after_chunks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "omit_usage": {
+          "type": "boolean"
+        },
+        "omit_done": {
+          "type": "boolean"
+        },
+        "send_pings": {
+          "type": "boolean"
+        }
+      }
+    },
+    "errorSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "preset": {
+          "type": "string",
+          "description": "Provider-aware error preset: billing, authentication, permission, not_found, model_not_found, rate_limit, overloaded, server_error, timeout, invalid_request, context_length, request_too_large, content_policy, conflict."
+        },
+        "status": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 599
+        },
+        "type": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "param": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "retry_after": {
+          "$ref": "#/$defs/duration"
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "rateLimit": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "session",
+            "global"
+          ]
+        },
+        "requests_per_minute": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tokens_per_minute": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "retry_after": {
+          "$ref": "#/$defs/duration"
+        },
+        "include_headers": {
+          "type": "boolean"
+        },
+        "exempt_paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "debug": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "headers": {
+          "type": "boolean"
+        },
+        "max_recorded_requests": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "record_tools": {
+          "type": "boolean"
+        }
+      }
+    },
+    "encryption": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "validate_replay": {
+          "type": "boolean"
+        }
+      }
+    },
+    "responses": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "store": {
+          "type": "boolean"
+        },
+        "ttl": {
+          "$ref": "#/$defs/duration"
+        },
+        "max_entries": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "providers": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "openai": {
+          "$ref": "#/$defs/openaiOptions"
+        },
+        "anthropic": {
+          "$ref": "#/$defs/anthropicOptions"
+        }
+      }
+    },
+    "openaiOptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "chat_reasoning_field": {
+          "type": "string",
+          "enum": [
+            "reasoning_content",
+            "reasoning",
+            "both",
+            "none"
+          ]
+        },
+        "system_fingerprint": {
+          "type": "string"
+        },
+        "validate_encrypted_content": {
+          "type": "boolean"
+        }
+      }
+    },
+    "anthropicOptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "require_version": {
+          "type": "boolean"
+        },
+        "api_version": {
+          "type": "string"
+        },
+        "stream_ping": {
+          "type": "boolean"
+        },
+        "validate_signatures": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

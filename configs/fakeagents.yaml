@@ -1,0 +1,82 @@
+# Minimal YAML configuration.
+#
+# FakeAgents merges this file over its built-in defaults, so only overrides are
+# listed here. Validate with:
+#   fakeagents validate -c configs/fakeagents.yaml
+
+server:
+  host: 127.0.0.1
+  port: 8081
+
+logging:
+  level: info
+  format: text
+  access_log: true
+
+defaults:
+  model: fake-gpt-4o
+  # Set to true to reject model IDs that are not in the catalog.
+  strict_models: false
+  # Simulated generation speed. Remove this block for the defaults.
+  latency:
+    enabled: true
+    time_to_first_token:
+      min: 20ms
+      max: 80ms
+    tokens_per_second:
+      min: 120
+      max: 300
+
+templates:
+  default: |
+    {{ .UserMessage }}
+
+    — FakeAgents / {{ .Model }} (turn {{ .Turn }})
+
+# Required custom headers. Enable this rule when testing OpenCode.
+required_headers:
+  - name: x-opencode-session
+    enabled: false
+    endpoints:
+      - chat.completions
+    status: 400
+    code: missing_required_header
+    message: "Missing required header: x-opencode-session"
+
+scenarios:
+  - name: markdown-mode
+    description: Return a Markdown answer.
+    match:
+      triggers: [markdown]
+    respond:
+      text_template: markdown
+
+  - name: acme-tenant-is-throttled
+    description: Any Acme tenant is rate limited.
+    priority: 50
+    match:
+      providers: [openai]
+      headers:
+        x-tenant: acme
+    respond:
+      type: error
+      error:
+        preset: rate_limit
+        retry_after: 3s
+
+  - name: gpt-5-high-effort-streams-fail
+    description: Streaming high-effort GPT-5 requests fail after three frames.
+    priority: 40
+    match:
+      providers: [openai]
+      endpoints: [responses]
+      models: ["gpt-5*"]
+      stream: true
+      json_equals:
+        reasoning.effort: high
+    respond:
+      type: text
+      stream:
+        fail_after_chunks: 3
+        error:
+          preset: overloaded

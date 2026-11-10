@@ -1,0 +1,63 @@
+{
+  "$schema": "../docs/config.schema.json",
+  "defaults": {
+    "latency": {"enabled": false}
+  },
+  "scenarios": [
+    {
+      "name": "glm-image-limit-example",
+      "description": "Simulate a model with a maximum of 32 image parts.",
+      "priority": 100,
+      "match": {
+        "providers": ["openai"],
+        "endpoints": ["chat.completions"],
+        "models": ["glm-5.3-flash"],
+        "json_count": [
+          {
+            "path": "messages.*.content.*",
+            "where": {"type": "image_url"},
+            "min": 33
+          }
+        ]
+      },
+      "respond": {
+        "type": "error",
+        "error": {
+          "status": 400,
+          "preset": "invalid_request",
+          "code": "too_many_images",
+          "message": "This simulated model accepts at most 32 images."
+        }
+      }
+    },
+    {
+      "name": "deepseek-tool-reasoning-example",
+      "description": "Require a nonempty reasoning_content on prior tool calls.",
+      "priority": 100,
+      "match": {
+        "providers": ["openai"],
+        "endpoints": ["chat.completions"],
+        "models": ["deepseek-v4*"],
+        "has_tools": true,
+        "json_count": [
+          {
+            "path": "messages.*",
+            "where": {"role": "assistant"},
+            "exists": ["tool_calls"],
+            "empty": ["reasoning_content"],
+            "min": 1
+          }
+        ]
+      },
+      "respond": {
+        "type": "error",
+        "error": {
+          "status": 400,
+          "preset": "invalid_request",
+          "code": "missing_reasoning_content",
+          "message": "This simulated provider requires nonempty reasoning_content for assistant tool calls."
+        }
+      }
+    }
+  ]
+}

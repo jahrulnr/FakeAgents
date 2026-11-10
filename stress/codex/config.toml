@@ -1,0 +1,15 @@
+model = "gpt-5.4"
+model_provider = "fakeagents"
+approval_policy = "never"
+sandbox_mode = "read-only"
+check_for_update_on_startup = false
+hide_agent_reasoning = true
+
+[model_providers.fakeagents]
+name = "FakeAgents"
+base_url = "http://fakeagents:11110/v1"
+env_key = "OPENAI_API_KEY"
+wire_api = "responses"
+request_max_retries = 0
+stream_max_retries = 0
+stream_idle_timeout_ms = 30000

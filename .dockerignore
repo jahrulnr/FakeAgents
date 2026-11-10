@@ -1,0 +1,15 @@
+.git
+.github
+bin
+coverage.out
+fakeagents
+fakeagents.json
+*.log
+docs
+stress
+scripts
+configs
+*.md
+.dockerignore
+.gitignore
+Makefile

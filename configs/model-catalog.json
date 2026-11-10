@@ -1,0 +1,51 @@
+{
+  "$schema": "../docs/config.schema.json",
+  "defaults": {
+    "model": "fake-lab/text",
+    "strict_models": true,
+    "latency": {"enabled": false}
+  },
+  "models": [
+    {
+      "id": "fake-lab/text",
+      "provider": "openai",
+      "display_name": "Fake Text",
+      "created": 1700000000,
+      "context_window": 64,
+      "max_output_tokens": 32,
+      "capabilities": ["chat"]
+    },
+    {
+      "id": "fake-lab/pro",
+      "provider": "openai",
+      "display_name": "Fake Pro",
+      "created": 1710000000,
+      "context_window": 128000,
+      "max_output_tokens": 16384,
+      "capabilities": ["chat", "tools", "vision", "reasoning", "structured_output"],
+      "pricing": {
+        "prompt": "0.000001",
+        "completion": "0.000004",
+        "input_cache_read": "0.0000001"
+      }
+    },
+    {
+      "id": "fake-claude-fast",
+      "provider": "anthropic",
+      "display_name": "Fake Claude Fast",
+      "created": 1710000000,
+      "context_window": 200000,
+      "max_output_tokens": 8192,
+      "capabilities": ["chat", "tools"]
+    },
+    {
+      "id": "fake-claude-pro",
+      "provider": "anthropic",
+      "display_name": "Fake Claude Pro",
+      "created": 1720000000,
+      "context_window": 200000,
+      "max_output_tokens": 16384,
+      "capabilities": ["chat", "tools", "reasoning"]
+    }
+  ]
+}
