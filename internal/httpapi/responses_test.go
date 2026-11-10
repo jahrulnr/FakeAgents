@@ -311,7 +311,7 @@ func responsesText(payload map[string]any) string {
 
 func TestResponsesStreamFailure(t *testing.T) {
 	server := newServer(t, func(cfg *config.Config) {
-		cfg.Defaults.Latency.Enabled = boolPointer(false)
+		cfg.Defaults.Latency.Enabled = new(false)
 	})
 	response := server.postStream(t, "/v1/responses", map[string]any{
 		"model":  "fake-gpt-5",

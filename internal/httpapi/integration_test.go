@@ -32,7 +32,7 @@ func newServer(t *testing.T, mutate func(*config.Config)) *testServer {
 	cfg.Logging.Level = "error"
 	cfg.Logging.Output = "discard"
 	cfg.Logging.AccessLog = &disabled
-	cfg.Debug.Enabled = boolPointer(true)
+	cfg.Debug.Enabled = new(true)
 	if mutate != nil {
 		mutate(cfg)
 	}
@@ -48,7 +48,8 @@ func newServer(t *testing.T, mutate func(*config.Config)) *testServer {
 	return &testServer{app: application, http: server, cfg: cfg}
 }
 
-func boolPointer(value bool) *bool { return &value }
+//go:fix inline
+func boolPointer(value bool) *bool { return new(value) }
 
 func (s *testServer) post(t *testing.T, path string, body any, headers map[string]string) (*http.Response, []byte) {
 	t.Helper()

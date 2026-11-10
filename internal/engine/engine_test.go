@@ -295,10 +295,10 @@ func TestUsageOverride(t *testing.T) {
 				Type: scenario.TypeText,
 				Usage: &scenario.UsageOverride{
 					Mode:            "fixed",
-					InputTokens:     intPtr(11),
-					OutputTokens:    intPtr(22),
-					ReasoningTokens: intPtr(3),
-					CachedTokens:    intPtr(4),
+					InputTokens:     new(11),
+					OutputTokens:    new(22),
+					ReasoningTokens: new(3),
+					CachedTokens:    new(4),
 				},
 			},
 		})
@@ -361,11 +361,12 @@ func TestCountInputTokens(t *testing.T) {
 	}
 }
 
-func intPtr(value int) *int { return &value }
+//go:fix inline
+func intPtr(value int) *int { return new(value) }
 
 func TestToolCallsCanSuppressReasoning(t *testing.T) {
 	h := newHarness(t, func(cfg *config.Config) {
-		cfg.Defaults.Tooling.IncludeReasoning = boolPointer(false)
+		cfg.Defaults.Tooling.IncludeReasoning = new(false)
 	})
 	req := baseRequest()
 	req.Reasoning = engine.ReasoningRequest{Requested: true, Effort: "high"}
@@ -386,4 +387,5 @@ func TestToolCallsCanSuppressReasoning(t *testing.T) {
 	}
 }
 
-func boolPointer(value bool) *bool { return &value }
+//go:fix inline
+func boolPointer(value bool) *bool { return new(value) }

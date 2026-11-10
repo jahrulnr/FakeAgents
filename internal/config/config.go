@@ -368,7 +368,7 @@ func Default() *Config {
 			ShutdownTimeout:   duration.Duration(15 * time.Second),
 			MaxBodyBytes:      32 << 20,
 			CORS: CORS{
-				Enabled:        boolPtr(true),
+				Enabled:        new(true),
 				AllowedOrigins: []string{"*"},
 				AllowedMethods: []string{"GET", "POST", "DELETE", "OPTIONS"},
 				AllowedHeaders: []string{"*"},
@@ -376,7 +376,7 @@ func Default() *Config {
 				MaxAge:         duration.Duration(10 * time.Minute),
 			},
 		},
-		Logging: Logging{Level: "info", Format: "text", AccessLog: boolPtr(true)},
+		Logging: Logging{Level: "info", Format: "text", AccessLog: new(true)},
 		Auth: Auth{
 			Mode:        "off",
 			ExemptPaths: []string{"/healthz", "/_fakeagents/*"},
@@ -385,7 +385,7 @@ func Default() *Config {
 			Provider:         "openai",
 			Model:            "fake-gpt-4o",
 			MaxOutputTokens:  1024,
-			RespectMaxTokens: boolPtr(true),
+			RespectMaxTokens: new(true),
 			SessionHeaders: []string{
 				"x-fakeagents-session",
 				"x-opencode-session",
@@ -403,12 +403,12 @@ func Default() *Config {
 			Usage: Usage{
 				Mode:          "computed",
 				Multiplier:    1,
-				SimulateCache: boolPtr(true),
+				SimulateCache: new(true),
 				CacheTokens:   1024,
 			},
 			Stream: Stream{ChunkSize: 24, ChunkUnit: "runes"},
 			Latency: Latency{
-				Enabled:          boolPtr(true),
+				Enabled:          new(true),
 				TimeToFirstToken: duration.Range{Min: duration.Duration(20 * time.Millisecond), Max: duration.Duration(60 * time.Millisecond)},
 				TokensPerSecond:  duration.NumberRange{Min: 150, Max: 400},
 			},
@@ -422,17 +422,17 @@ func Default() *Config {
 			RequestsPerMinute: 60,
 			TokensPerMinute:   20000,
 			RetryAfter:        duration.Duration(time.Second),
-			IncludeHeaders:    boolPtr(true),
+			IncludeHeaders:    new(true),
 			ExemptPaths:       []string{"/healthz", "/_fakeagents/*"},
 		},
 		Debug: Debug{
-			Enabled:             boolPtr(true),
-			Headers:             boolPtr(true),
+			Enabled:             new(true),
+			Headers:             new(true),
 			MaxRecordedRequests: 200,
 		},
-		Encryption: Encryption{ValidateReplay: boolPtr(true)},
+		Encryption: Encryption{ValidateReplay: new(true)},
 		Responses: Responses{
-			Store:      boolPtr(true),
+			Store:      new(true),
 			TTL:        duration.Duration(time.Hour),
 			MaxEntries: 1000,
 		},
@@ -440,21 +440,23 @@ func Default() *Config {
 			OpenAI: OpenAI{
 				ChatReasoningField:       "reasoning_content",
 				SystemFingerprint:        "fp_fakeagents",
-				ValidateEncryptedContent: boolPtr(true),
+				ValidateEncryptedContent: new(true),
 			},
 			Anthropic: Anthropic{
-				RequireVersion:     boolPtr(true),
+				RequireVersion:     new(true),
 				APIVersion:         "2023-06-01",
-				StreamPing:         boolPtr(true),
-				ValidateSignatures: boolPtr(true),
+				StreamPing:         new(true),
+				ValidateSignatures: new(true),
 			},
 		},
 	}
 }
 
-func boolPtr(value bool) *bool { return &value }
+//go:fix inline
+func boolPtr(value bool) *bool { return new(value) }
 
-func intPtr(value int) *int { return &value }
+//go:fix inline
+func intPtr(value int) *int { return new(value) }
 
 func defaultScenarios() []scenario.Spec {
 	return []scenario.Spec{
@@ -464,7 +466,7 @@ func defaultScenarios() []scenario.Spec {
 			Match:       scenario.Match{Triggers: []string{"reasoning", "thinking"}},
 			Respond: scenario.Respond{
 				Type:              scenario.TypeText,
-				Thinking:          boolPtr(true),
+				Thinking:          new(true),
 				ReasoningTemplate: "reasoning",
 			},
 		},
@@ -474,7 +476,7 @@ func defaultScenarios() []scenario.Spec {
 			Match:       scenario.Match{Triggers: []string{"tool", "tools", "tool-call"}},
 			Respond: scenario.Respond{
 				Type:     scenario.TypeToolCall,
-				Thinking: boolPtr(true),
+				Thinking: new(true),
 			},
 		},
 		{
@@ -482,8 +484,8 @@ func defaultScenarios() []scenario.Spec {
 			Description: "Multi-turn tool loop driven by the harness tools[] array; final answer after the plan is exhausted.",
 			Match:       scenario.Match{Triggers: []string{"agent", "agentic"}},
 			Respond: scenario.Respond{
-				Agentic:  boolPtr(true),
-				Thinking: boolPtr(true),
+				Agentic:  new(true),
+				Thinking: new(true),
 			},
 		},
 		{
@@ -517,10 +519,10 @@ func defaultScenarios() []scenario.Spec {
 				UserRegex: `(?i)test tool error`,
 			},
 			Respond: scenario.Respond{
-				Thinking: boolPtr(true),
+				Thinking: new(true),
 				Steps: []scenario.Respond{
 					{
-						ToolCalls: []scenario.ToolCallSpec{{ToolIndex: intPtr(0)}},
+						ToolCalls: []scenario.ToolCallSpec{{ToolIndex: new(0)}},
 					},
 					{
 						ToolCalls: []scenario.ToolCallSpec{{

@@ -81,7 +81,7 @@ func TestConcurrentRoomsAndActiveRequests(t *testing.T) {
 		t.Fatalf("active requests = %d, want 2", activeCount)
 	}
 
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		select {
 		case result := <-results:
 			if result.err != nil {

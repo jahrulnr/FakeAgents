@@ -123,13 +123,11 @@ func TestEmbeddedScenarioErrorAndConcurrentClose(t *testing.T) {
 	server.Close()
 	var group sync.WaitGroup
 	for range 10 {
-		group.Add(1)
-		go func() {
-			defer group.Done()
+		group.Go(func() {
 			if err := fake.Close(); err != nil {
 				t.Error(err)
 			}
-		}()
+		})
 	}
 	group.Wait()
 }

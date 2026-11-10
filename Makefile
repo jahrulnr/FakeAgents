@@ -10,7 +10,7 @@ LDFLAGS := -s -w \
 	-X github.com/jahrulnr/fakeagents/internal/version.Commit=$(COMMIT) \
 	-X github.com/jahrulnr/fakeagents/internal/version.Date=$(DATE)
 
-.PHONY: build test race vet fmt lint quality fix cover run init docker stress clean
+.PHONY: build test race vet fmt fmt-fix mod-fix lint quality fix fix-check check cover run init docker stress clean
 
 build:
 	mkdir -p bin
@@ -37,12 +37,38 @@ fmt:
 	@files="$$(gofmt -l .)"; \
 	if [ -n "$$files" ]; then echo "gofmt required:"; echo "$$files"; exit 1; fi
 
+fmt-fix:
+	gofmt -w .
+
+mod-fix:
+	go mod tidy
+
 lint: fmt vet
 
-quality: test lint race
+fix-check:
+	go fix -diff ./...
+	go mod tidy -diff
 
+# fix applies every safe auto-fixer, then the quality gate verifies.
 fix:
+	@echo "==> go fix"
 	go fix ./...
+	@echo "==> gofmt"
+	gofmt -w .
+	@if command -v goimports >/dev/null 2>&1; then \
+		echo "==> goimports"; goimports -w .; \
+	else \
+		echo "==> goimports not installed (skipped)"; \
+	fi
+	@echo "==> go mod tidy"
+	go mod tidy
+
+quality: fix
+	$(MAKE) test
+	$(MAKE) lint
+	$(MAKE) race
+
+check: lint fix-check test race
 
 cover:
 	go test -coverprofile=coverage.out ./...

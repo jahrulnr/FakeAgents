@@ -36,18 +36,15 @@ func Marshal(v any) ([]byte, error) {
 }
 
 func decodeError(err error) *apierr.Error {
-	var maxErr *http.MaxBytesError
-	if errors.As(err, &maxErr) {
+	if maxErr, ok := errors.AsType[*http.MaxBytesError](err); ok {
 		return apierr.New(http.StatusRequestEntityTooLarge, "invalid_request_error", "request_too_large",
 			fmt.Sprintf("Request body exceeds the %d byte limit.", maxErr.Limit))
 	}
-	var syntax *json.SyntaxError
-	if errors.As(err, &syntax) {
+	if syntax, ok := errors.AsType[*json.SyntaxError](err); ok {
 		return apierr.New(http.StatusBadRequest, "invalid_request_error", "invalid_json",
 			fmt.Sprintf("Invalid JSON in request body at byte %d: %s", syntax.Offset, syntax.Error()))
 	}
-	var typeErr *json.UnmarshalTypeError
-	if errors.As(err, &typeErr) {
+	if typeErr, ok := errors.AsType[*json.UnmarshalTypeError](err); ok {
 		field := typeErr.Field
 		if field == "" {
 			field = "body"
@@ -84,8 +81,7 @@ func ReadBody(w http.ResponseWriter, r *http.Request, maxBytes int64) ([]byte, *
 	}
 	raw, err := io.ReadAll(body)
 	if err != nil {
-		var maxErr *http.MaxBytesError
-		if errors.As(err, &maxErr) {
+		if maxErr, ok := errors.AsType[*http.MaxBytesError](err); ok {
 			return nil, apierr.New(http.StatusRequestEntityTooLarge, "invalid_request_error", "request_too_large",
 				fmt.Sprintf("Request body exceeds the %d byte limit.", maxErr.Limit))
 		}

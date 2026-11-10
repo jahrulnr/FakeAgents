@@ -34,9 +34,9 @@ func TestScriptedToolTurns(t *testing.T) {
 			Name:  "scripted",
 			Match: scenario.Match{Triggers: []string{"scripted"}},
 			Respond: scenario.Respond{
-				Thinking: boolPointer(true),
+				Thinking: new(true),
 				Steps: []scenario.Respond{
-					{ToolCalls: []scenario.ToolCallSpec{{ToolIndex: intPointer(0)}}},
+					{ToolCalls: []scenario.ToolCallSpec{{ToolIndex: new(0)}}},
 					{ToolCalls: []scenario.ToolCallSpec{{
 						Name:          "fakeagents_missing_tool",
 						Arguments:     map[string]any{},
@@ -220,7 +220,8 @@ func TestBuiltinToolErrorScenario(t *testing.T) {
 	}
 }
 
-func intPointer(value int) *int { return &value }
+//go:fix inline
+func intPointer(value int) *int { return new(value) }
 
 func TestScriptResetsAfterNewUserPrompt(t *testing.T) {
 	h := newHarness(t, nil)

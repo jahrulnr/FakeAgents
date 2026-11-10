@@ -518,6 +518,9 @@ The engine emits a provider-neutral plan. Adapters only translate wire formats. 
 ## Development
 
 ```bash
+make fix           # go fix + gofmt + goimports + go mod tidy
+make quality       # auto-fix, then test + lint + race
+make check         # verification only (fmt, vet, go fix -diff, tidy -diff, test, race)
 make test          # go test ./...
 make race          # go test -race ./...
 make vet           # go vet ./...

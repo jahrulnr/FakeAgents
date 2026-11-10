@@ -796,10 +796,7 @@ func (e *Engine) agentToolCalls(req *Request, respond scenario.Respond, data *te
 		}
 		return nil, nil
 	}
-	step := req.Step
-	if step < 0 {
-		step = 0
-	}
+	step := max(req.Step, 0)
 	if step >= len(plan) {
 		return nil, nil
 	}

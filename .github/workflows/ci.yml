@@ -27,10 +27,18 @@ jobs:
         run: |
           files="$(gofmt -l .)"
           if [ -n "$files" ]; then
-            echo "gofmt required:"
+            echo "gofmt required; run 'make fix' locally:"
             echo "$files"
             exit 1
           fi
+
+      - name: go fix
+        shell: bash
+        run: go fix -diff ./...
+
+      - name: go mod tidy
+        shell: bash
+        run: go mod tidy -diff
 
       - name: vet
         run: go vet ./...

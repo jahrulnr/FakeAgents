@@ -29,8 +29,7 @@ func (h *Handler) mediaEvent(r *http.Request, writer *sse.Writer, plan *engine.P
 }
 
 func (h *Handler) multipartError(w http.ResponseWriter, r *http.Request, field string, err error) {
-	var maxError *http.MaxBytesError
-	if errors.As(err, &maxError) {
+	if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
 		h.fail(w, r, h.options(r), apierr.MustPreset(apierr.ProviderOpenAI, "request_too_large"))
 		return
 	}

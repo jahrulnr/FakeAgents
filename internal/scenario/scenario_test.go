@@ -36,7 +36,7 @@ func TestMatchByModelHeaderAndJSON(t *testing.T) {
 				Models:     []string{"gpt-5*"},
 				Headers:    map[string]string{"X-Test": "yes"},
 				JSONEquals: map[string]any{"reasoning.effort": "high"},
-				Stream:     boolPtr(true),
+				Stream:     new(true),
 			},
 			Respond: scenario.Respond{Type: scenario.TypeText},
 		},
@@ -116,7 +116,8 @@ func TestProbabilityIsDeterministicWithRNG(t *testing.T) {
 	}
 }
 
-func boolPtr(value bool) *bool { return &value }
+//go:fix inline
+func boolPtr(value bool) *bool { return new(value) }
 
 func TestScriptedStepsValidation(t *testing.T) {
 	index := 0
