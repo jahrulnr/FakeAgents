@@ -30,6 +30,7 @@ Usage:
 
 Commands:
   serve        Start the API server (default)
+  acp          Run an Agent Client Protocol agent on stdio
   validate     Validate configuration and templates
   init         Write a starter configuration file
   scenarios    List configured scenarios and triggers
@@ -78,6 +79,8 @@ func Run(args []string) int {
 		return 0
 	case "serve":
 		return serve(args[1:])
+	case "acp":
+		return serveACP(args[1:])
 	case "validate":
 		return validate(args[1:])
 	case "init":
@@ -157,6 +160,62 @@ func serve(args []string) int {
 	defer stop()
 	if err := application.Run(ctx); err != nil {
 		application.Logger.Error("server stopped", "error", err)
+		return 1
+	}
+	return 0
+}
+
+// serveACP runs the ACP agent over stdin/stdout. ACP reserves stdout for the
+// protocol stream, so logging is redirected to stderr unless the configuration
+// already points it elsewhere.
+func serveACP(args []string) int {
+	options := serveOptions{port: -1}
+	fs := flag.NewFlagSet("acp", flag.ContinueOnError)
+	fs.SetOutput(os.Stderr)
+	fs.StringVar(&options.configShort, "c", "", "configuration file")
+	fs.StringVar(&options.configLong, "config", "", "configuration file")
+	fs.StringVar(&options.logLevel, "log-level", "", "log level")
+	fs.StringVar(&options.logFormat, "log-format", "", "log format")
+	fs.StringVar(&options.scenario, "scenario", "", "force a scenario")
+	fs.BoolVar(&options.strict, "strict", false, "strict model validation")
+	fs.BoolVar(&options.noLatency, "no-latency", false, "disable simulated latency")
+	fs.BoolVar(&options.printConfig, "print-config", false, "print resolved configuration and exit")
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return 0
+		}
+		return 2
+	}
+
+	path := firstNonEmpty(options.configLong, options.configShort, os.Getenv("FAKEAGENTS_CONFIG"))
+	cfg, err := config.Load(path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "fakeagents: %v\n", err)
+		return 2
+	}
+	applyServeOverrides(cfg, options)
+	if cfg.Logging.Output == "" || strings.EqualFold(cfg.Logging.Output, "stdout") {
+		cfg.Logging.Output = "stderr"
+	}
+	if err := cfg.Validate(); err != nil {
+		fmt.Fprintf(os.Stderr, "fakeagents: %v\n", err)
+		return 2
+	}
+	if options.printConfig {
+		return writeJSON(cfg.Redacted())
+	}
+
+	application, err := app.New(cfg, buildInfo())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "fakeagents: %v\n", err)
+		return 2
+	}
+	defer application.Close()
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	if err := application.RunACP(ctx, os.Stdin, os.Stdout); err != nil {
+		application.Logger.Error("acp agent stopped", "error", err)
 		return 1
 	}
 	return 0

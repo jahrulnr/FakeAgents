@@ -158,6 +158,9 @@ const ProviderAnthropic = "anthropic"
 // ProviderOpenAI is the canonical OpenAI provider id.
 const ProviderOpenAI = "openai"
 
+// ProviderACP is the canonical Agent Client Protocol provider id.
+const ProviderACP = "acp"
+
 func invalidRequestType(provider string) string {
 	if provider == ProviderAnthropic {
 		return "invalid_request_error"

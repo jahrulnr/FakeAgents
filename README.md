@@ -201,6 +201,18 @@ print(message.content[0].text)
 
 See the [model discovery examples](docs/providers.md#model-discovery) for a fixture that exercises these formats.
 
+## ACP agent over stdio
+
+FakeAgents also ships an [Agent Client Protocol](https://agentclientprotocol.com) surface for ACP-capable editors and harnesses (for example Zed's external agents). It is not another HTTP route — run it as a subprocess speaking JSON-RPC 2.0 over stdio:
+
+```bash
+fakeagents acp -c config.yaml
+```
+
+The agent implements `initialize`, `session/new`, `session/prompt`, `session/close`/`session/delete`, `session/cancel`, and `$/cancel_request`. Inside a prompt turn it streams `agent_thought_chunk`/`agent_message_chunk` updates, runs simulated tool calls through the `tool_call` → permission → `tool_call_update` lifecycle, delegates `read`/`edit`/`execute` kinds to the client's `fs/*` and `terminal/*` methods when advertised, and finishes with `usage_update` plus an ACP `stopReason`.
+
+Everything is driven by the same deterministic engine: `[[fakeagents:<scenario>]]` directives in the prompt text and `_meta.fakeagents.{scenario,turn,step}` on `session/prompt` select scenarios and turn/step positions exactly like the HTTP controls do, so thinking, tool plans, error presets, and mid-stream faults (`fail_after_chunks`, `abort_after_chunks`) all work. See [docs/providers.md](docs/providers.md#agent-client-protocol-acp) and [`providers.acp`](docs/configuration.md#providersacp-stdio-agent) for the full surface and knobs.
+
 ## Scenario triggers
 
 Scenario selection follows this precedence:
@@ -546,6 +558,7 @@ The bundled stress test only executes `pwd` inside its own container. You run ha
 - Encrypted reasoning and thinking signatures are locally authenticated blobs. They round-trip through FakeAgents but are not interchangeable with provider-issued blobs.
 - Image and audio output uses deterministic fixtures. Video, embeddings, batches, and realtime APIs are out of scope.
 - Model IDs are fake by default, but any model string is accepted unless `defaults.strict_models` is enabled.
+- The ACP agent implements stable protocol v1 only (v2 is still alpha), never executes real tools, and resolves every call by client delegation or deterministic fabrication.
 
 ## License
 

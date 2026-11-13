@@ -25,6 +25,7 @@ const (
 	EndpointImageEdit       = "images.edits"
 	EndpointSpeech          = "audio.speech"
 	EndpointTranscription   = "audio.transcriptions"
+	EndpointACPPrompt       = "acp.prompt"
 )
 
 // Response types.
@@ -203,6 +204,7 @@ type Context struct {
 var validEndpoints = map[string]struct{}{
 	EndpointImageGeneration: {}, EndpointImageEdit: {}, EndpointSpeech: {}, EndpointTranscription: {},
 	EndpointChat: {}, EndpointResponses: {}, EndpointMessages: {}, EndpointCount: {}, EndpointModels: {},
+	EndpointACPPrompt: {},
 }
 
 // Validate checks a spec's semantic correctness. Provider-dependent details are

@@ -334,6 +334,12 @@ Controls the in-memory Responses API store used by `previous_response_id`, `GET 
       "api_version": "2023-06-01",
       "stream_ping": true,
       "validate_signatures": true
+    },
+    "acp": {
+      "title": "FakeAgents",
+      "permission": "mutating",
+      "use_client_tools": true,
+      "max_turns": 8
     }
   }
 }
@@ -343,6 +349,15 @@ Controls the in-memory Responses API store used by `previous_response_id`, `GET 
 - `require_version`: require the `anthropic-version` header. Disable for lenient clients.
 - `stream_ping`: emit an Anthropic `ping` event after `message_start`.
 - `validate_encrypted_content` / `validate_signatures`: verify replayed opaque reasoning blobs.
+
+### `providers.acp` (stdio agent)
+
+`providers.acp` configures the `fakeagents acp` Agent Client Protocol surface.
+
+- `title`: human-readable agent name returned by `initialize` (`agentInfo.title`).
+- `permission`: when simulated tool calls ask the client via `session/request_permission`. `never` skips permission entirely, `mutating` (default) asks for `edit`, `delete`, `move`, `execute`, and `other` kinds, `always` asks for every call.
+- `use_client_tools`: when the client advertises `fs`/`terminal` capabilities, delegate matching simulated tool kinds to `fs/read_text_file`, `fs/write_text_file`, and `terminal/*` instead of fabricating output. Default `true`.
+- `max_turns`: bound on engine iterations inside one `session/prompt` (each tool call round is one iteration). Default `8`; exhaustion returns `stopReason: "max_turn_requests"`.
 
 ## Environment variables and flags
 

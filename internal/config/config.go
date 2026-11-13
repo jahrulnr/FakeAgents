@@ -320,6 +320,39 @@ func (r Responses) StoreEnabled() bool { return r.Store == nil || *r.Store }
 type Providers struct {
 	OpenAI    OpenAI    `json:"openai" yaml:"openai"`
 	Anthropic Anthropic `json:"anthropic" yaml:"anthropic"`
+	ACP       ACP       `json:"acp" yaml:"acp"`
+}
+
+// ACP configures the Agent Client Protocol (ACP) surface exposed by the
+// `fakeagents acp` stdio agent.
+type ACP struct {
+	Title          string `json:"title,omitempty" yaml:"title,omitempty"`
+	Permission     string `json:"permission,omitempty" yaml:"permission,omitempty"` // never | mutating | always
+	UseClientTools *bool  `json:"use_client_tools,omitempty" yaml:"use_client_tools,omitempty"`
+	MaxTurns       int    `json:"max_turns,omitempty" yaml:"max_turns,omitempty"`
+}
+
+// PermissionMode reports the effective permission policy (default mutating).
+func (a ACP) PermissionMode() string {
+	mode := strings.ToLower(strings.TrimSpace(a.Permission))
+	if mode == "" {
+		return "mutating"
+	}
+	return mode
+}
+
+// ClientToolsEnabled reports whether simulated tool calls may delegate to
+// client-advertised fs/* and terminal/* methods (default true).
+func (a ACP) ClientToolsEnabled() bool {
+	return a.UseClientTools == nil || *a.UseClientTools
+}
+
+// MaxIterations bounds engine iterations inside one prompt turn (default 8).
+func (a ACP) MaxIterations() int {
+	if a.MaxTurns <= 0 {
+		return 8
+	}
+	return a.MaxTurns
 }
 
 // OpenAI configures OpenAI-compatible behavior.
@@ -447,6 +480,11 @@ func Default() *Config {
 				APIVersion:         "2023-06-01",
 				StreamPing:         new(true),
 				ValidateSignatures: new(true),
+			},
+			ACP: ACP{
+				Permission:     "mutating",
+				UseClientTools: new(true),
+				MaxTurns:       8,
 			},
 		},
 	}
@@ -862,6 +900,14 @@ func (c *Config) Validate() error {
 	if c.Providers.Anthropic.APIVersion == "" {
 		add("providers.anthropic.api_version must not be empty")
 	}
+	switch strings.ToLower(strings.TrimSpace(c.Providers.ACP.Permission)) {
+	case "", "never", "mutating", "always":
+	default:
+		add("providers.acp.permission must be never, mutating, or always")
+	}
+	if c.Providers.ACP.MaxTurns < 0 {
+		add("providers.acp.max_turns must be >= 0")
+	}
 
 	switch strings.ToLower(c.RateLimit.Scope) {
 	case "", "session", "global":
@@ -930,7 +976,7 @@ func (c *Config) Validate() error {
 
 func knownEndpoint(endpoint string) bool {
 	switch endpoint {
-	case scenario.EndpointChat, scenario.EndpointResponses, scenario.EndpointMessages, scenario.EndpointCount, scenario.EndpointModels, scenario.EndpointImageGeneration, scenario.EndpointImageEdit, scenario.EndpointSpeech, scenario.EndpointTranscription:
+	case scenario.EndpointChat, scenario.EndpointResponses, scenario.EndpointMessages, scenario.EndpointCount, scenario.EndpointModels, scenario.EndpointImageGeneration, scenario.EndpointImageEdit, scenario.EndpointSpeech, scenario.EndpointTranscription, scenario.EndpointACPPrompt:
 		return true
 	default:
 		return false

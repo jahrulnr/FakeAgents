@@ -16,6 +16,7 @@ import (
 	"github.com/jahrulnr/fakeagents/internal/id"
 	"github.com/jahrulnr/fakeagents/internal/logging"
 	"github.com/jahrulnr/fakeagents/internal/observe"
+	"github.com/jahrulnr/fakeagents/internal/provider/acp"
 	"github.com/jahrulnr/fakeagents/internal/provider/anthropic"
 	"github.com/jahrulnr/fakeagents/internal/provider/openai"
 	"github.com/jahrulnr/fakeagents/internal/ratelimit"
@@ -31,6 +32,7 @@ type App struct {
 	Logger  *slog.Logger
 	Engine  *engine.Engine
 	Server  *httpapi.Server
+	ACP     *acp.Agent
 	Sealer  envelope.Sealer
 	Store   *store.Memory
 	logFile io.Closer
@@ -132,11 +134,21 @@ func New(cfg *config.Config, build httpapi.BuildInfo) (*App, error) {
 		Version:   build,
 	})
 
+	acpAgent := acp.New(acp.Deps{
+		Config:  cfg,
+		Engine:  sim,
+		Clock:   clk,
+		IDs:     ids,
+		Logger:  logger,
+		Version: build.Version,
+	})
+
 	return &App{
 		Config:  cfg,
 		Logger:  logger,
 		Engine:  sim,
 		Server:  server,
+		ACP:     acpAgent,
 		Sealer:  sealer,
 		Store:   responses,
 		logFile: logCloser,
@@ -146,6 +158,12 @@ func New(cfg *config.Config, build httpapi.BuildInfo) (*App, error) {
 // Run starts the HTTP server and blocks until ctx is cancelled.
 func (a *App) Run(ctx context.Context) error {
 	return a.Server.Run(ctx)
+}
+
+// RunACP serves the Agent Client Protocol agent on in/out until the client
+// disconnects or ctx ends.
+func (a *App) RunACP(ctx context.Context, in io.Reader, out io.Writer) error {
+	return a.ACP.Run(ctx, in, out)
 }
 
 // Close releases resources held by the application.

@@ -48,6 +48,7 @@ type (
 	Providers        = config.Providers
 	OpenAI           = config.OpenAI
 	Anthropic        = config.Anthropic
+	ACP              = config.ACP
 	ValidationError  = config.ValidationError
 	Duration         = duration.Duration
 	DurationRange    = duration.Range
@@ -78,6 +79,7 @@ const (
 	EndpointImageEdit       = scenario.EndpointImageEdit
 	EndpointSpeech          = scenario.EndpointSpeech
 	EndpointTranscription   = scenario.EndpointTranscription
+	EndpointACPPrompt       = scenario.EndpointACPPrompt
 )
 
 // Response types can be used in ScenarioResponse.Type.
