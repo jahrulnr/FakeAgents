@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -183,13 +184,7 @@ func (a *Agent) executeViaClient(ctx context.Context, emit *emitter, call engine
 	sess := emit.sess
 	caps := a.capabilities()
 	absPath := func(arguments map[string]any) string {
-		path := stringArg(arguments, "path", "file_path", "filePath", "file", "filename")
-		// ACP requires absolute paths; anchor fabricated relative paths at the
-		// session working directory.
-		if path != "" && !filepath.IsAbs(path) {
-			path = filepath.Join(sess.cwd, path)
-		}
-		return path
+		return resolveToolPath(sess.cwd, stringArg(arguments, "path", "file_path", "filePath", "file", "filename"))
 	}
 	switch kind {
 	case "read":
@@ -299,6 +294,25 @@ func decodeArguments(raw string) (map[string]any, error) {
 		return nil, err
 	}
 	return args, nil
+}
+
+// resolveToolPath anchors a relative tool path at the session cwd.
+// ACP paths are client protocol strings, not host filesystem paths. filepath
+// rewrites a slash-rooted cwd such as /tmp/work into \tmp\work on Windows,
+// and that result is not absolute there. A slash-rooted cwd stays
+// slash-separated on every OS; other cwd forms use the host path package.
+func resolveToolPath(cwd, p string) string {
+	if p == "" || isProtocolAbs(p) {
+		return p
+	}
+	if strings.HasPrefix(cwd, "/") {
+		return path.Join(cwd, p)
+	}
+	return filepath.Join(cwd, p)
+}
+
+func isProtocolAbs(p string) bool {
+	return strings.HasPrefix(p, "/") || filepath.IsAbs(p)
 }
 
 func stringArg(args map[string]any, keys ...string) string {
